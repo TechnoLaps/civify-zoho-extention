@@ -4,22 +4,6 @@
   "locale": {
     "default": "en"
   },
-  "orgVariables": [
-    {
-      "apiName": "civify_api_key",
-      "displayName": "Civify API Key",
-      "description": "API Key for Civify CV parsing service. Get it from your Civify account.",
-      "type": "string",
-      "value": ""
-    },
-    {
-      "apiName": "civify_api_url",
-      "displayName": "Civify API URL",
-      "description": "Base URL for Civify API (optional, uses default if empty)",
-      "type": "string",
-      "value": "https://civify.cv/apis/v1/external/cvs"
-    }
-  ],
   "modules": {
     "Leads": {
       "relatedListWidget": {
