@@ -187,33 +187,46 @@ function renderAttachments(attachments) {
 
 async function getFileBlob(fileId) {
     try {
-        // Use downloadFile to get the actual file content as a blob
-        const response = await ZOHO.CRM.API.downloadFile({ id: fileId });
+        console.log("getFileBlob: Attempting to download file ID:", fileId);
+        
+        // ZOHO.CRM.API.getFile returns a Blob directly
+        const response = await ZOHO.CRM.API.getFile({ id: fileId });
+        console.log("getFileBlob: Response type:", typeof response, response);
         
         // If response is already a Blob, return it
         if (response instanceof Blob) {
+            console.log("getFileBlob: Got Blob, size:", response.size);
             return response;
         }
         
         // If response is an ArrayBuffer, convert to Blob
         if (response instanceof ArrayBuffer) {
+            console.log("getFileBlob: Got ArrayBuffer, converting to Blob");
             return new Blob([response]);
         }
         
         // If response has a blob() method (Response object), call it
         if (response && typeof response.blob === 'function') {
+            console.log("getFileBlob: Got Response, calling blob()");
             return await response.blob();
         }
         
-        // Fallback: try getFile API
-        const fileResponse = await ZOHO.CRM.API.getFile({ id: fileId });
-        if (fileResponse instanceof Blob) {
-            return fileResponse;
+        // If response is a string (base64), decode it
+        if (typeof response === 'string') {
+            console.log("getFileBlob: Got string, assuming base64");
+            const byteCharacters = atob(response);
+            const byteNumbers = new Array(byteCharacters.length);
+            for (let i = 0; i < byteCharacters.length; i++) {
+                byteNumbers[i] = byteCharacters.charCodeAt(i);
+            }
+            const byteArray = new Uint8Array(byteNumbers);
+            return new Blob([byteArray]);
         }
         
-        throw new Error("Unable to download file content");
+        console.error("getFileBlob: Unknown response format:", response);
+        throw new Error("Unable to process file response");
     } catch (error) {
-        console.error("Error downloading file:", error);
+        console.error("getFileBlob: Error:", error);
         throw error;
     }
 }
