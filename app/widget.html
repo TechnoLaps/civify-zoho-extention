@@ -37,12 +37,12 @@
         </div>
 
         <div class="tabs">
-            <div class="tab active" onclick="switchTab('parse')">Parse CV</div>
-            <div class="tab" onclick="switchTab('mask')">Mask CV</div>
+            <!-- <div class="tab active" onclick="switchTab('parse')">Parse CV</div> -->
+            <div class="tab active" onclick="switchTab('mask')">Mask CV</div>
             <div class="tab" onclick="switchTab('settings')">Settings</div>
         </div>
 
-        <div id="parse-view" class="view active">
+        <!-- <div id="parse-view" class="view active">
             <h3>Parse CV from Attachments</h3>
             <p style="color: #666; font-size: 0.9em;">Select a PDF/DOCX attachment.</p>
             
@@ -58,9 +58,9 @@
                 </div>
             </div>
             <div id="parse-status" style="margin-top: 10px;"></div>
-        </div>
+        </div> -->
 
-        <div id="mask-view" class="view">
+        <div id="mask-view" class="view active">
             <h3>Mask CV PII</h3>
             <p style="color: #666; font-size: 0.9em;">Mask personally identifiable information.</p>
             <div id="mask-file-loading" class="hidden"><div class="spinner"></div> Loading...</div>
@@ -82,7 +82,7 @@
             </div>
             <div class="form-group">
                 <label>API Url <span style="color:#999; font-weight:normal;">(optional override)</span></label>
-                <input type="text" id="api-url" placeholder="Default: https://api.civify.ai/v1/external/cvs">
+                <input type="text" id="api-url" placeholder="Default: https://civify.cv/apis/v1/external/cvs">
             </div>
             <button onclick="saveSettings()">Save Settings</button>
             <span id="settings-status" style="margin-left: 10px;"></span>
