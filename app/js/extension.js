@@ -185,16 +185,41 @@ function renderAttachments(attachments) {
     });
 }
 
-async function getFileBlob(fileId) {
+async function getFileBlob(fileId, entity, recordId) {
     try {
-        console.log("getFileBlob: Attempting to download file ID:", fileId);
+        console.log("getFileBlob: Downloading file:", { fileId, entity, recordId });
         
-        // ZOHO.CRM.API.getFile returns a Blob directly
-        const response = await ZOHO.CRM.API.getFile({ id: fileId });
+        // Zoho CRM API getFile requires Entity and RecordID for attachments
+        const params = { id: fileId };
+        
+        // Add parent context if available
+        if (entity && recordId) {
+            params.Entity = entity;
+            params.RecordID = recordId;
+        }
+        
+        console.log("getFileBlob: Calling ZOHO.CRM.API.getFile with:", params);
+        const response = await ZOHO.CRM.API.getFile(params);
         console.log("getFileBlob: Response type:", typeof response, response);
         
-        // If response is already a Blob, return it
-        if (response instanceof Blob) {
+        // Check if response is an error (empty blob with xml type)
+        if (response instanceof Blob && response.size === 0) {
+            console.error("getFileBlob: Empty blob returned, trying alternative method");
+            
+            // Try using getRelatedRecordFile alternative
+            const altResponse = await ZOHO.CRM.API.getFile({
+                Entity: "Attachments",
+                RecordID: fileId
+            });
+            console.log("getFileBlob: Alt response:", altResponse);
+            
+            if (altResponse instanceof Blob && altResponse.size > 0) {
+                return altResponse;
+            }
+        }
+        
+        // If response is already a Blob with content, return it
+        if (response instanceof Blob && response.size > 0) {
             console.log("getFileBlob: Got Blob, size:", response.size);
             return response;
         }
@@ -223,8 +248,8 @@ async function getFileBlob(fileId) {
             return new Blob([byteArray]);
         }
         
-        console.error("getFileBlob: Unknown response format:", response);
-        throw new Error("Unable to process file response");
+        console.error("getFileBlob: Unknown response format or empty file:", response);
+        throw new Error("Unable to download file - the file may be empty or inaccessible");
     } catch (error) {
         console.error("getFileBlob: Error:", error);
         throw error;
@@ -247,7 +272,7 @@ async function parseFile(fileId) {
     statusDiv.innerText = "Downloading file...";
     
     try {
-        const fileBlob = await getFileBlob(fileId);
+        const fileBlob = await getFileBlob(fileId, currentModule, currentRecordId);
         const file = new File([fileBlob], fileMeta.File_Name, { type: "application/pdf" });
         
         statusDiv.innerText = "Parsing with Civify...";
@@ -345,7 +370,7 @@ async function maskFile(fileId) {
     statusDiv.innerText = "Downloading...";
 
     try {
-        const fileBlob = await getFileBlob(fileId);
+        const fileBlob = await getFileBlob(fileId, currentModule, currentRecordId);
         console.log("File blob received:", fileBlob, "Size:", fileBlob.size, "Type:", fileBlob.type);
         
         // Determine MIME type from file extension
