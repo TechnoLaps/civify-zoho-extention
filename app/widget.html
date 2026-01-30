@@ -2,105 +2,109 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>Civify CV Service</title>
+    <title>Civify CV Masking</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
     <script src="https://live.zwidgets.com/js-sdk/1.1/ZohoEmbededAppSDK.min.js"></script>
     <style>
         body { font-family: 'Inter', sans-serif; margin: 0; padding: 20px; color: #333; background-color: #f9f9f9; }
-        .container { max-width: 800px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        .container { max-width: 500px; margin: 0 auto; background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+        h2 { margin: 0 0 10px 0; color: #1e40af; font-size: 1.4em; }
+        .subtitle { color: #666; font-size: 0.9em; margin-bottom: 20px; }
         .tabs { display: flex; border-bottom: 2px solid #eee; margin-bottom: 20px; }
         .tab { padding: 10px 20px; cursor: pointer; font-weight: 500; color: #666; margin-right: 10px; }
         .tab.active { color: #2563eb; border-bottom: 2px solid #2563eb; margin-bottom: -2px; }
         .view { display: none; }
         .view.active { display: block; }
         .form-group { margin-bottom: 15px; }
-        label { display: block; margin-bottom: 5px; font-weight: 500; font-size: 0.9em; }
-        input, select { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; }
-        button { background-color: #2563eb; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; font-weight: 500; }
-        button:hover { background-color: #1d4ed8; }
-        .file-list { list-style: none; padding: 0; margin: 15px 0; border: 1px solid #eee; border-radius: 4px; }
-        .file-item { padding: 10px; border-bottom: 1px solid #eee; display: flex; align-items: center; justify-content: space-between; }
-        .file-item:last-child { border-bottom: none; }
-        .hidden { display: none; }
-        .spinner { border: 3px solid #f3f3f3; border-top: 3px solid #2563eb; border-radius: 50%; width: 20px; height: 20px; animation: spin 1s linear infinite; display: inline-block; vertical-align: middle; margin-right: 10px; }
+        label { display: block; margin-bottom: 8px; font-weight: 500; font-size: 0.9em; color: #374151; }
+        input[type="file"] { 
+            width: 100%; padding: 15px; border: 2px dashed #ddd; border-radius: 8px; 
+            box-sizing: border-box; background: #fafafa; cursor: pointer;
+        }
+        input[type="file"]:hover { border-color: #2563eb; background: #f0f7ff; }
+        input[type="text"], input[type="password"] { 
+            width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; 
+        }
+        button { 
+            background: linear-gradient(135deg, #2563eb, #1d4ed8); color: white; 
+            padding: 12px 24px; border: none; border-radius: 6px; cursor: pointer; 
+            font-weight: 600; font-size: 0.95em; transition: transform 0.1s;
+        }
+        button:hover { transform: translateY(-1px); }
+        button:active { transform: translateY(0); }
+        .status { margin-top: 15px; padding: 12px; border-radius: 6px; font-size: 0.9em; }
+        .status.success { background: #d1fae5; color: #065f46; }
+        .status.error { background: #fee2e2; color: #991b1b; }
+        .status.loading { background: #dbeafe; color: #1e40af; }
+        .spinner { border: 3px solid #f3f3f3; border-top: 3px solid #2563eb; border-radius: 50%; width: 16px; height: 16px; animation: spin 1s linear infinite; display: inline-block; vertical-align: middle; margin-right: 8px; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        .result-preview { background: #f8f9fa; padding: 15px; border-radius: 4px; margin-top: 20px; display: none; }
-        .field-row { display: flex; margin-bottom: 8px; align-items: center; }
-        .field-label { width: 100px; font-size: 0.9em; color: #666; }
-        .field-value { flex: 1; font-weight: 500; }
+        .info-box { background: #f0f9ff; border: 1px solid #bae6fd; color: #0369a1; padding: 12px; border-radius: 6px; font-size: 0.85em; margin-bottom: 20px; }
     </style>
 </head>
 <body>
     <div class="container">
-        <div id="settings-warning" style="background: #fff3cd; color: #856404; padding: 10px; border-radius: 4px; margin-bottom: 15px; display: none;">
-            Please configure your API Key in the Settings tab.
+        <h2>🔒 Civify CV Masking</h2>
+        <p class="subtitle">Remove personal information from CVs</p>
+
+        <div id="settings-warning" style="background: #fef3c7; color: #92400e; padding: 12px; border-radius: 6px; margin-bottom: 15px; display: none; font-size: 0.9em;">
+            ⚠️ Please configure your API Key in the Settings tab.
         </div>
 
         <div class="tabs">
-            <div class="tab active" onclick="switchTab('parse')">Parse CV</div>
-            <div class="tab" onclick="switchTab('mask')">Mask CV</div>
+            <div class="tab active" onclick="switchTab('mask')">Mask CV</div>
+            <!-- Parse tab commented out for now
+            <div class="tab" onclick="switchTab('parse')">Parse CV</div>
+            -->
             <div class="tab" onclick="switchTab('settings')">Settings</div>
         </div>
 
-        <div id="parse-view" class="view active">
-            <h3>Parse CV</h3>
-            <p style="color: #666; font-size: 0.9em;">Select an attachment or upload a PDF/DOCX file.</p>
-            
-            <!-- Upload Option -->
-            <div class="form-group" style="margin-bottom: 15px;">
-                <label>Upload File</label>
-                <input type="file" id="parse-upload" accept=".pdf,.docx,.doc" onchange="handleParseUpload(this)">
+        <div id="mask-view" class="view active">
+            <div class="info-box">
+                📄 Upload a CV (PDF or DOCX) to mask personal details like name, email, phone, and address.
             </div>
             
-            <!-- Or select from attachments -->
-            <div style="color: #999; font-size: 0.85em; margin: 10px 0; text-align: center;">— or select from attachments —</div>
+            <div class="form-group">
+                <label>Select CV File</label>
+                <input type="file" id="mask-upload" accept=".pdf,.docx,.doc" onchange="handleMaskUpload(this)">
+            </div>
             
-            <div id="parse-file-loading" class="hidden"><div class="spinner"></div> Loading attachments...</div>
-            <div id="parse-no-files" class="hidden" style="color: #999; font-size: 0.9em;">No attachments found on this record.</div>
-            <ul id="parse-file-list" class="file-list"></ul>
+            <div id="mask-status"></div>
+        </div>
 
-            <div id="parse-result" class="result-preview">
+        <!-- Parse view commented out for now
+        <div id="parse-view" class="view">
+            <div class="info-box">
+                📋 Upload a CV to extract structured data (name, experience, education, skills).
+            </div>
+            
+            <div class="form-group">
+                <label>Select CV File</label>
+                <input type="file" id="parse-upload" accept=".pdf,.docx,.doc" onchange="handleParseUpload(this)">
+            </div>
+
+            <div id="parse-result" class="result-preview" style="display:none;">
                 <h4>Extracted Data</h4>
                 <div id="parsed-fields"></div>
                 <div style="margin-top: 20px; text-align: right;">
                     <button onclick="saveParsedData()">Update Record</button>
                 </div>
             </div>
-            <div id="parse-status" style="margin-top: 10px;"></div>
+            <div id="parse-status"></div>
         </div>
-
-        <div id="mask-view" class="view">
-            <h3>Mask CV PII</h3>
-            <p style="color: #666; font-size: 0.9em;">Mask personally identifiable information from CV.</p>
-            
-            <!-- Upload Option -->
-            <div class="form-group" style="margin-bottom: 15px;">
-                <label>Upload File</label>
-                <input type="file" id="mask-upload" accept=".pdf,.docx,.doc" onchange="handleMaskUpload(this)">
-            </div>
-            
-            <!-- Or select from attachments -->
-            <div style="color: #999; font-size: 0.85em; margin: 10px 0; text-align: center;">— or select from attachments —</div>
-            
-            <div id="mask-file-loading" class="hidden"><div class="spinner"></div> Loading attachments...</div>
-            <div id="mask-no-files" class="hidden" style="color: #999; font-size: 0.9em;">No attachments found on this record.</div>
-            <ul id="mask-file-list" class="file-list"></ul>
-            <div id="mask-status" style="margin-top: 10px;"></div>
-        </div>
+        -->
 
         <div id="settings-view" class="view">
-            <h3>Extension Settings</h3>
-            <p style="color: #666; font-size: 0.85em; margin-bottom: 15px;">
-                Configure Civify API credentials.
-            </p>
-            <div id="org-key-info" style="background: #d4edda; color: #155724; padding: 8px 12px; border-radius: 4px; margin-bottom: 15px; display: none; font-size: 0.85em;"></div>
+            <div class="info-box">
+                🔑 Set your Civify API Key here, or configure it as an Organization Variable for all users.
+            </div>
+            <div id="org-key-info" style="background: #d1fae5; color: #065f46; padding: 10px; border-radius: 6px; margin-bottom: 15px; display: none; font-size: 0.85em;"></div>
             <div class="form-group">
                 <label>API Key <span style="color:#999; font-weight:normal;">(optional override)</span></label>
                 <input type="password" id="api-key" placeholder="Leave empty to use Organization Variable">
                 <p style="color: #999; font-size: 0.75em; margin-top: 4px;">Org Variable: <code>civify_api_key</code></p>
             </div>
             <div class="form-group">
-                <label>API Url <span style="color:#999; font-weight:normal;">(optional override)</span></label>
+                <label>API URL <span style="color:#999; font-weight:normal;">(optional)</span></label>
                 <input type="text" id="api-url" placeholder="Default: https://civify.cv/apis/v1/external/cvs">
             </div>
             <button onclick="saveSettings()">Save Settings</button>
