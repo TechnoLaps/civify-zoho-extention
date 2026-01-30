@@ -37,17 +37,26 @@
         </div>
 
         <div class="tabs">
-            <!-- <div class="tab active" onclick="switchTab('parse')">Parse CV</div> -->
-            <div class="tab active" onclick="switchTab('mask')">Mask CV</div>
+            <div class="tab active" onclick="switchTab('parse')">Parse CV</div>
+            <div class="tab" onclick="switchTab('mask')">Mask CV</div>
             <div class="tab" onclick="switchTab('settings')">Settings</div>
         </div>
 
-        <!-- <div id="parse-view" class="view active">
-            <h3>Parse CV from Attachments</h3>
-            <p style="color: #666; font-size: 0.9em;">Select a PDF/DOCX attachment.</p>
+        <div id="parse-view" class="view active">
+            <h3>Parse CV</h3>
+            <p style="color: #666; font-size: 0.9em;">Select an attachment or upload a PDF/DOCX file.</p>
             
-            <div id="parse-file-loading" class="hidden"><div class="spinner"></div> Loading...</div>
-            <div id="parse-no-files" class="hidden">No attachments found.</div>
+            <!-- Upload Option -->
+            <div class="form-group" style="margin-bottom: 15px;">
+                <label>Upload File</label>
+                <input type="file" id="parse-upload" accept=".pdf,.docx,.doc" onchange="handleParseUpload(this)">
+            </div>
+            
+            <!-- Or select from attachments -->
+            <div style="color: #999; font-size: 0.85em; margin: 10px 0; text-align: center;">— or select from attachments —</div>
+            
+            <div id="parse-file-loading" class="hidden"><div class="spinner"></div> Loading attachments...</div>
+            <div id="parse-no-files" class="hidden" style="color: #999; font-size: 0.9em;">No attachments found on this record.</div>
             <ul id="parse-file-list" class="file-list"></ul>
 
             <div id="parse-result" class="result-preview">
@@ -58,13 +67,23 @@
                 </div>
             </div>
             <div id="parse-status" style="margin-top: 10px;"></div>
-        </div> -->
+        </div>
 
-        <div id="mask-view" class="view active">
+        <div id="mask-view" class="view">
             <h3>Mask CV PII</h3>
-            <p style="color: #666; font-size: 0.9em;">Mask personally identifiable information.</p>
-            <div id="mask-file-loading" class="hidden"><div class="spinner"></div> Loading...</div>
-            <div id="mask-no-files" class="hidden">No attachments found.</div>
+            <p style="color: #666; font-size: 0.9em;">Mask personally identifiable information from CV.</p>
+            
+            <!-- Upload Option -->
+            <div class="form-group" style="margin-bottom: 15px;">
+                <label>Upload File</label>
+                <input type="file" id="mask-upload" accept=".pdf,.docx,.doc" onchange="handleMaskUpload(this)">
+            </div>
+            
+            <!-- Or select from attachments -->
+            <div style="color: #999; font-size: 0.85em; margin: 10px 0; text-align: center;">— or select from attachments —</div>
+            
+            <div id="mask-file-loading" class="hidden"><div class="spinner"></div> Loading attachments...</div>
+            <div id="mask-no-files" class="hidden" style="color: #999; font-size: 0.9em;">No attachments found on this record.</div>
             <ul id="mask-file-list" class="file-list"></ul>
             <div id="mask-status" style="margin-top: 10px;"></div>
         </div>

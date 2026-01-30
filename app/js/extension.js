@@ -126,7 +126,12 @@ function saveSettings() {
 }
 
 function fetchAttachments() {
-    if (!currentRecordId || !currentModule) return;
+    if (!currentRecordId || !currentModule) {
+        console.log("fetchAttachments: No record context", { currentRecordId, currentModule });
+        return;
+    }
+    
+    console.log("fetchAttachments: Fetching for", currentModule, currentRecordId);
     
     const loadingIds = ['parse-file-loading', 'mask-file-loading'];
     const listIds = ['parse-file-list', 'mask-file-list'];
@@ -143,16 +148,19 @@ function fetchAttachments() {
         page: 1,
         per_page: 50
     }).then(function(data) {
+        console.log("fetchAttachments: Response", data);
         loadingIds.forEach(id => { const el = document.getElementById(id); if(el) el.classList.add('hidden'); });
         
         if (data && data.data && data.data.length > 0) {
             currentAttachments = data.data;
+            console.log("fetchAttachments: Found", currentAttachments.length, "attachments", currentAttachments);
             renderAttachments(currentAttachments);
         } else {
+            console.log("fetchAttachments: No attachments found");
             emptyIds.forEach(id => { const el = document.getElementById(id); if(el) el.classList.remove('hidden'); });
         }
     }).catch(err => {
-        console.error("Error fetching attachments", err);
+        console.error("fetchAttachments: Error", err);
         loadingIds.forEach(id => { const el = document.getElementById(id); if(el) el.classList.add('hidden'); });
         emptyIds.forEach(id => { const el = document.getElementById(id); if(el) el.classList.remove('hidden'); });
     });
@@ -377,4 +385,130 @@ async function maskFile(fileId) {
         console.error(e);
         statusDiv.innerText = "Error: " + e.message;
     }
+}
+
+// Handle file upload for Parse
+async function handleParseUpload(input) {
+    if (!input.files || input.files.length === 0) return;
+    
+    const file = input.files[0];
+    const apiKey = await getApiKey();
+    const apiUrl = await getApiUrl();
+    
+    if (!apiKey) {
+        alert("Please configure API Key in Settings or set Organization Variable.");
+        switchTab('settings');
+        return;
+    }
+    
+    const statusDiv = document.getElementById('parse-status');
+    statusDiv.innerText = "Parsing uploaded file...";
+    
+    try {
+        const formData = new FormData();
+        formData.append("file", file);
+        
+        console.log("Uploading file for parsing:", file.name, "Size:", file.size, "Type:", file.type);
+        
+        const response = await fetch(`${apiUrl}/parse`, {
+            method: 'POST',
+            headers: { 'X-API-KEY': apiKey },
+            body: formData
+        });
+        
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`API Error: ${response.status} - ${errorText}`);
+        }
+        
+        const data = await response.json();
+        if (data.success && data.resumeData) {
+            statusDiv.innerText = "Success! Parsed CV data.";
+            parsedDataCache = data.resumeData;
+            showParsePreview(data.resumeData);
+            
+            // Optionally save file as attachment
+            if (currentRecordId && currentModule) {
+                await ZOHO.CRM.API.attachFile({
+                    Entity: currentModule,
+                    RecordID: currentRecordId,
+                    File: { Name: file.name, Content: file }
+                });
+                console.log("File saved as attachment");
+            }
+        } else {
+            throw new Error(data.message || "Unknown error");
+        }
+    } catch (e) {
+        console.error(e);
+        statusDiv.innerText = "Error: " + e.message;
+    }
+    
+    // Clear the input
+    input.value = '';
+}
+
+// Handle file upload for Mask
+async function handleMaskUpload(input) {
+    if (!input.files || input.files.length === 0) return;
+    
+    const file = input.files[0];
+    const apiKey = await getApiKey();
+    const apiUrl = await getApiUrl();
+    
+    if (!apiKey) {
+        alert("Please configure API Key in Settings or set Organization Variable.");
+        switchTab('settings');
+        return;
+    }
+    
+    const statusDiv = document.getElementById('mask-status');
+    statusDiv.innerText = "Masking uploaded file...";
+    
+    try {
+        const formData = new FormData();
+        formData.append("file", file);
+        
+        console.log("Uploading file for masking:", file.name, "Size:", file.size, "Type:", file.type);
+        
+        const response = await fetch(`${apiUrl}/mask`, {
+            method: 'POST',
+            headers: { 'X-API-KEY': apiKey },
+            body: formData
+        });
+        
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`API Error: ${response.status} - ${errorText}`);
+        }
+        
+        const maskedBlob = await response.blob();
+        statusDiv.innerText = "Masked successfully! Uploading as attachment...";
+        
+        // Save masked file as attachment
+        if (currentRecordId && currentModule) {
+            await ZOHO.CRM.API.attachFile({
+                Entity: currentModule,
+                RecordID: currentRecordId,
+                File: { Name: "MASKED_" + file.name, Content: maskedBlob }
+            });
+            statusDiv.innerText = "Masked file uploaded successfully!";
+            setTimeout(() => fetchAttachments(), 2000);
+        } else {
+            // If no record context, offer download
+            const url = URL.createObjectURL(maskedBlob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = "MASKED_" + file.name.replace(/\.[^.]+$/, '.pdf');
+            a.click();
+            URL.revokeObjectURL(url);
+            statusDiv.innerText = "Masked file downloaded!";
+        }
+    } catch (e) {
+        console.error(e);
+        statusDiv.innerText = "Error: " + e.message;
+    }
+    
+    // Clear the input
+    input.value = '';
 }
