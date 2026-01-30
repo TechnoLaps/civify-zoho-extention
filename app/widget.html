@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Civify CV Service</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <script src="https://live.zwidgets.com/js-sdk/1.1/ZohoEmbededAppSDK.min.js"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; margin: 0; padding: 20px; color: #333; background-color: #f9f9f9; }
+        .container { max-width: 800px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        .tabs { display: flex; border-bottom: 2px solid #eee; margin-bottom: 20px; }
+        .tab { padding: 10px 20px; cursor: pointer; font-weight: 500; color: #666; margin-right: 10px; }
+        .tab.active { color: #2563eb; border-bottom: 2px solid #2563eb; margin-bottom: -2px; }
+        .view { display: none; }
+        .view.active { display: block; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: 500; font-size: 0.9em; }
+        input, select { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; }
+        button { background-color: #2563eb; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; font-weight: 500; }
+        button:hover { background-color: #1d4ed8; }
+        .file-list { list-style: none; padding: 0; margin: 15px 0; border: 1px solid #eee; border-radius: 4px; }
+        .file-item { padding: 10px; border-bottom: 1px solid #eee; display: flex; align-items: center; justify-content: space-between; }
+        .file-item:last-child { border-bottom: none; }
+        .hidden { display: none; }
+        .spinner { border: 3px solid #f3f3f3; border-top: 3px solid #2563eb; border-radius: 50%; width: 20px; height: 20px; animation: spin 1s linear infinite; display: inline-block; vertical-align: middle; margin-right: 10px; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .result-preview { background: #f8f9fa; padding: 15px; border-radius: 4px; margin-top: 20px; display: none; }
+        .field-row { display: flex; margin-bottom: 8px; align-items: center; }
+        .field-label { width: 100px; font-size: 0.9em; color: #666; }
+        .field-value { flex: 1; font-weight: 500; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div id="settings-warning" style="background: #fff3cd; color: #856404; padding: 10px; border-radius: 4px; margin-bottom: 15px; display: none;">
+            Please configure your API Key in the Settings tab.
+        </div>
+
+        <div class="tabs">
+            <div class="tab active" onclick="switchTab('parse')">Parse CV</div>
+            <div class="tab" onclick="switchTab('mask')">Mask CV</div>
+            <div class="tab" onclick="switchTab('settings')">Settings</div>
+        </div>
+
+        <div id="parse-view" class="view active">
+            <h3>Parse CV from Attachments</h3>
+            <p style="color: #666; font-size: 0.9em;">Select a PDF/DOCX attachment.</p>
+            
+            <div id="parse-file-loading" class="hidden"><div class="spinner"></div> Loading...</div>
+            <div id="parse-no-files" class="hidden">No attachments found.</div>
+            <ul id="parse-file-list" class="file-list"></ul>
+
+            <div id="parse-result" class="result-preview">
+                <h4>Extracted Data</h4>
+                <div id="parsed-fields"></div>
+                <div style="margin-top: 20px; text-align: right;">
+                    <button onclick="saveParsedData()">Update Record</button>
+                </div>
+            </div>
+            <div id="parse-status" style="margin-top: 10px;"></div>
+        </div>
+
+        <div id="mask-view" class="view">
+            <h3>Mask CV PII</h3>
+            <p style="color: #666; font-size: 0.9em;">Mask personally identifiable information.</p>
+            <div id="mask-file-loading" class="hidden"><div class="spinner"></div> Loading...</div>
+            <div id="mask-no-files" class="hidden">No attachments found.</div>
+            <ul id="mask-file-list" class="file-list"></ul>
+            <div id="mask-status" style="margin-top: 10px;"></div>
+        </div>
+
+        <div id="settings-view" class="view">
+            <h3>Extension Settings</h3>
+            <p style="color: #666; font-size: 0.85em; margin-bottom: 15px;">
+                Configure Civify API credentials.
+            </p>
+            <div id="org-key-info" style="background: #d4edda; color: #155724; padding: 8px 12px; border-radius: 4px; margin-bottom: 15px; display: none; font-size: 0.85em;"></div>
+            <div class="form-group">
+                <label>API Key <span style="color:#999; font-weight:normal;">(optional override)</span></label>
+                <input type="password" id="api-key" placeholder="Leave empty to use Organization Variable">
+                <p style="color: #999; font-size: 0.75em; margin-top: 4px;">Org Variable: <code>civify_api_key</code></p>
+            </div>
+            <div class="form-group">
+                <label>API Url <span style="color:#999; font-weight:normal;">(optional override)</span></label>
+                <input type="text" id="api-url" placeholder="Default: https://api.civify.ai/v1/external/cvs">
+            </div>
+            <button onclick="saveSettings()">Save Settings</button>
+            <span id="settings-status" style="margin-left: 10px;"></span>
+        </div>
+    </div>
+    <script src="js/extension.js"></script>
+</body>
+</html>

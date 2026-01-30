@@ -1,0 +1,55 @@
+{
+  "service": "CRM",
+  "crmversion": "2.0",
+  "locale": {
+    "default": "en"
+  },
+  "modules": {
+    "Leads": {
+      "relatedListWidget": {
+        "widgetId": "civify_embed",
+        "name": "Civify CV Parser"
+      }
+    },
+    "Contacts": {
+      "relatedListWidget": {
+        "widgetId": "civify_embed",
+        "name": "Civify CV Parser"
+      }
+    }
+  },
+  "buttons": [
+    {
+      "name": "Parse CV",
+      "modules": ["Leads", "Contacts"],
+      "location": "DetailViewButton",
+      "action": {
+        "type": "invoke.widget",
+        "widget": "civify_popup"
+      }
+    }
+  ],
+  "widgets": [
+    {
+      "name": "Civify CV Popup",
+      "widgetId": "civify_popup",
+      "location": "popup",
+      "html": "/app/widget.html"
+    },
+    {
+      "name": "Civify CV Embed",
+      "widgetId": "civify_embed",
+      "location": "related_list",
+      "html": "/app/widget.html",
+      "logo": "",
+      "icon": ""
+    }
+  ],
+  "usedconnectors": [],
+  "permissions": [
+    "ZohoCRM.modules.ALL",
+    "ZohoCRM.settings.ALL",
+    "ZohoCRM.Files.READ",
+    "ZohoCRM.Files.CREATE"
+  ]
+}
