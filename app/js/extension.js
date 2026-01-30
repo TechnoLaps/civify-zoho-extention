@@ -129,8 +129,8 @@ function saveSettings() {
     checkApiKeyWarning();
 }
 
-// Helper to update status display
-function setStatus(elementId, message, type) {
+// Helper to update status display with optional action buttons
+function setStatus(elementId, message, type, actions) {
     const el = document.getElementById(elementId);
     if (!el) return;
     
@@ -138,7 +138,51 @@ function setStatus(elementId, message, type) {
     if (type === 'loading') {
         el.innerHTML = '<div class="spinner"></div> ' + message;
     } else {
-        el.innerText = message;
+        el.innerHTML = message;
+    }
+    
+    // Add action buttons if provided
+    if (actions && actions.length > 0) {
+        const btnContainer = document.createElement('div');
+        btnContainer.style.marginTop = '12px';
+        btnContainer.style.display = 'flex';
+        btnContainer.style.gap = '10px';
+        
+        actions.forEach(action => {
+            const btn = document.createElement('button');
+            btn.innerText = action.label;
+            btn.onclick = action.onClick;
+            btn.style.padding = '8px 16px';
+            btn.style.fontSize = '0.85em';
+            if (action.secondary) {
+                btn.style.background = '#f3f4f6';
+                btn.style.color = '#374151';
+            }
+            btnContainer.appendChild(btn);
+        });
+        
+        el.appendChild(btnContainer);
+    }
+}
+
+// Start over - reset the form
+function startOver() {
+    const statusEl = document.getElementById('mask-status');
+    if (statusEl) {
+        statusEl.innerHTML = '';
+        statusEl.className = '';
+    }
+    const uploadEl = document.getElementById('mask-upload');
+    if (uploadEl) uploadEl.value = '';
+}
+
+// Close widget and refresh the parent page
+function closeAndRefresh() {
+    try {
+        ZOHO.CRM.UI.Popup.closeReload();
+    } catch (e) {
+        // Fallback: just reload the widget
+        window.location.reload();
     }
 }
 
@@ -179,6 +223,11 @@ async function handleMaskUpload(input) {
         const maskedBlob = await response.blob();
         console.log("Masked blob received:", maskedBlob.size, "bytes");
         
+        const successActions = [
+            { label: '🔄 Mask Another', onClick: startOver, secondary: true },
+            { label: '✓ Close & Refresh', onClick: closeAndRefresh }
+        ];
+        
         // Save masked file as attachment if we have record context
         if (currentRecordId && currentModule) {
             setStatus('mask-status', 'Saving masked file to record...', 'loading');
@@ -189,20 +238,24 @@ async function handleMaskUpload(input) {
                     RecordID: currentRecordId,
                     File: { Name: "MASKED_" + file.name.replace(/\.[^.]+$/, '.pdf'), Content: maskedBlob }
                 });
-                setStatus('mask-status', '✓ Masked file saved to attachments!', 'success');
+                setStatus('mask-status', '✓ Masked file saved to attachments!', 'success', successActions);
             } catch (attachErr) {
                 console.warn("Could not attach file, offering download instead:", attachErr);
                 downloadBlob(maskedBlob, "MASKED_" + file.name.replace(/\.[^.]+$/, '.pdf'));
-                setStatus('mask-status', '✓ Masked file downloaded (could not save to record)', 'success');
+                setStatus('mask-status', '✓ Masked file downloaded (could not save to record)', 'success', successActions);
             }
         } else {
             // No record context, just download
             downloadBlob(maskedBlob, "MASKED_" + file.name.replace(/\.[^.]+$/, '.pdf'));
-            setStatus('mask-status', '✓ Masked file downloaded!', 'success');
+            setStatus('mask-status', '✓ Masked file downloaded!', 'success', [
+                { label: '🔄 Mask Another', onClick: startOver }
+            ]);
         }
     } catch (e) {
         console.error("Mask error:", e);
-        setStatus('mask-status', '✗ Error: ' + e.message, 'error');
+        setStatus('mask-status', '✗ Error: ' + e.message, 'error', [
+            { label: '🔄 Try Again', onClick: startOver }
+        ]);
     }
     
     // Clear the input
